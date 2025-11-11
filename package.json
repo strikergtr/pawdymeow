@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@api/leonardoai": "file:.api/apis/leonardoai",
+    "lucide-react": "^0.553.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.3"
