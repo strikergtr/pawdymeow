@@ -1,6 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 // ⭐️ import ไอคอนมาให้ครบ (แก้ไขชื่อไอคอนที่ผิด)
-import { Camera, Heart, Video, MessageCircleQuestion, Save, Star } from "lucide-react";
+import {
+  Camera,
+  Heart,
+  Video,
+  MessageCircleQuestion,
+  Save,
+  Star,
+  Cat,
+} from "lucide-react";
+import { FaHandPointLeft, FaHandPointRight } from "react-icons/fa";
 
 // -----------------
 // ไอคอน SVG (สำหรับปุ่ม)
@@ -14,10 +23,9 @@ const Spinner = () => (
 // -----------------
 // URL ของ Backend (Laravel API)
 // -----------------
-const API_BASE_URL = 'https://dev.dpujam.com/api'; // ⭐️ ตรวจสอบว่านี่คือ URL ที่ถูกต้อง
+const API_BASE_URL = "https://dev.dpujam.com/api"; // ⭐️ ตรวจสอบว่านี่คือ URL ที่ถูกต้อง
 
 export default function App() {
-
   // -----------------
   // State ทั้งหมดของแอป
   // -----------------
@@ -28,13 +36,13 @@ export default function App() {
   // 4 = หน้าสรุปผล (อาหาร)
   // 5 = หน้าสร้าง/แสดงวิดีโอ
   const [step, setStep] = useState(1);
-  const [catName, setCatName] = useState('');
+  const [catName, setCatName] = useState("");
   const [originalImageFile, setOriginalImageFile] = useState(null);
-  const [originalImagePreview, setOriginalImagePreview] = useState('');
+  const [originalImagePreview, setOriginalImagePreview] = useState("");
 
   // State สำหรับผลลัพธ์
   const [generatedImageData, setGeneratedImageData] = useState(null); // { id: '...', url: '...' }
-  const [generatedVideoUrl, setGeneratedVideoUrl] = useState('');
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState("");
 
   // ⭐️ State สำหรับคำถาม
   const [catAge, setCatAge] = useState(null); // '<1' หรือ '>=1'
@@ -48,7 +56,6 @@ export default function App() {
   // ⭐️ State for reaction animation (0=hidden, 1=msg1, 2=msg2, 3=msg3)
   const [reactionStep, setReactionStep] = useState(0);
 
-
   // -----------------
 
   // เมื่อเลือกไฟล์
@@ -59,7 +66,7 @@ export default function App() {
       setOriginalImagePreview(URL.createObjectURL(file));
       // รีเซ็ตค่าเมื่อเลือกรูปใหม่
       setGeneratedImageData(null);
-      setGeneratedVideoUrl('');
+      setGeneratedVideoUrl("");
       setStep(1);
     }
   };
@@ -68,27 +75,27 @@ export default function App() {
   const handleSubmitImage = async (e) => {
     e.preventDefault();
     if (!originalImageFile || !catName) {
-      alert('กรุณาใส่ชื่อและอัปโหลดรูปก่อนครับ');
+      alert("กรุณาใส่ชื่อและอัปโหลดรูปก่อนครับ");
       return;
     }
     setIsLoadingImage(true);
     setGeneratedImageData(null);
-    setGeneratedVideoUrl('');
+    setGeneratedVideoUrl("");
 
     const formData = new FormData();
-    formData.append('catName', catName);
-    formData.append('imageFile', originalImageFile);
+    formData.append("catName", catName);
+    formData.append("imageFile", originalImageFile);
 
     try {
       const response = await fetch(`${API_BASE_URL}/imagen`, {
-        method: 'POST',
+        method: "POST",
         body: formData,
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์');
+        throw new Error(result.error || "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์");
       }
 
       setGeneratedImageData(result);
@@ -104,9 +111,9 @@ export default function App() {
   // ⭐️ ฟังก์ชันใหม่: เมื่อเลือกอายุ (คำถาม 1)
   const handleAgeSelect = (age) => {
     setCatAge(age);
-    if (age === '<1') {
+    if (age === "<1") {
       // แมวเด็ก ไปหน้าสรุปผลเลย
-      setRecommendedFood('kitten');
+      setRecommendedFood("kitten");
       setStep(4);
     } else {
       // แมวโต ไปคำถาม 2
@@ -117,30 +124,44 @@ export default function App() {
   // ⭐️ ฟังก์ชันใหม่: เมื่อเลือกกิจกรรม (คำถาม 2)
   const handleActivitySelect = (level) => {
     setActivityLevel(level);
-    if (level === 'high') {
-      setRecommendedFood('active');
+    if (level === "high") {
+      setRecommendedFood("active");
     } else {
-      setRecommendedFood('indoor');
+      setRecommendedFood("indoor");
     }
     setStep(4); // ไปหน้าสรุปผล
+  };
+
+  // ⭐️ New function to handle Facebook Share
+  const handleShareToFacebook = () => {
+    if (!generatedVideoUrl) {
+        alert('กรุณาสร้างวิดีโอก่อนแชร์');
+      return;
+            }
+
+    // Customize your share URL
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(generatedVideoUrl)}&quote=${encodeURIComponent(`มาดู ${catName} ชิม ${getFoodDisplayName(recommendedFood)}! #PawdyAI #CatFood`)}`;
+
+     // Open in a new window/tab
+    window.open(shareUrl, '_blank', 'width=600,height=400');
   };
 
   // ⭐️ เมื่อกด "สร้างวิดีโอ" (ย้ายไปขั้นตอนที่ 5)
   const handleSubmitVideo = async () => {
     if (!generatedImageData || !generatedImageData.id) {
-      alert('เกิดข้อผิดพลาด: ไม่พบ ID รูปภาพที่สร้าง');
+      alert("เกิดข้อผิดพลาด: ไม่พบ ID รูปภาพที่สร้าง");
       return;
     }
 
     setIsLoadingVideo(true);
-    setGeneratedVideoUrl('');
+    setGeneratedVideoUrl("");
 
     try {
       const response = await fetch(`${API_BASE_URL}/imagen-video`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           imageId: generatedImageData.id,
@@ -150,7 +171,7 @@ export default function App() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์');
+        throw new Error(result.error || "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์");
       }
 
       setGeneratedVideoUrl(result.url);
@@ -168,11 +189,11 @@ export default function App() {
   // ฟังก์ชันสำหรับกลับไปเริ่มต้นใหม่
   const handleReset = () => {
     setStep(1);
-    setCatName('');
+    setCatName("");
     setOriginalImageFile(null);
-    setOriginalImagePreview('');
+    setOriginalImagePreview("");
     setGeneratedImageData(null);
-    setGeneratedVideoUrl('');
+    setGeneratedVideoUrl("");
     setIsLoadingImage(false);
     setIsLoadingVideo(false);
     // ⭐️ รีเซ็ต state คำถามด้วย
@@ -219,31 +240,34 @@ export default function App() {
   // ⭐️ ฟังก์ชันสำหรับแสดงผลลัพธ์อาหาร
   const renderFoodRecommendation = () => {
     let foodData = {
-      title: '',
-      imageUrl: '',
-      description: ''
+      title: "",
+      imageUrl: "",
+      description: "",
     };
 
     switch (recommendedFood) {
-      case 'kitten':
+      case "kitten":
         foodData = {
-          title: 'อาหารแมวเด็ก (Kitten Formula)',
-          imageUrl: './01.jpg',
-          description: 'สูตรสำหรับลูกแมวโดยเฉพาะ ให้พลังงานสูงและสารอาหารครบถ้วน'
+          title: "สำหรับเจ้าเหมียวเด็ก (Kitten Formula)",
+          imageUrl: "./01.jpg",
+          description:
+            "สูตร:ทูน่าพลัสนมแพะ เสริมสร้างภูมิคุ้มกันเพื่อพัฒนาการที่สมบูรณ์ เหมาะมากสำหรับวัยกำลังโต",
         };
         break;
-      case 'active':
+      case "active":
         foodData = {
-          title: 'สูตรแมวแอคทีฟ (Active Cat)',
-          imageUrl: './02.jpg',
-          description: 'สำหรับแมวพลังงานสูง ชอบวิ่งเล่น ต้องการโปรตีนเพื่อเสริมสร้างกล้ามเนื้อ'
+          title: "สำหรับเจ้าเหมียวตัวแสบ (Feline Active Cat Formula)",
+          imageUrl: "./02.jpg",
+          description:
+            "แมวสายลุยต้องหมุนได้ไม่หยุด 🐾 สูตรแกะและทูน่าผสมกุ้ง เสริมกล้ามเนื้อ ดูแลข้อต่อ ให้พร้อมทุกกิจกรรม",
         };
         break;
-      case 'indoor':
+      case "indoor":
         foodData = {
-          title: 'สูตรแมวเลี้ยงในบ้าน (Indoor Cat)',
-          imageUrl: './03.jpg',
-          description: 'สำหรับแมวที่ไม่ค่อยได้ทำกิจกรรม ช่วยควบคุมพลังงานและดูแลรูปร่าง'
+          title: "สำหรับเจ้าเหมียวสายนอน  (Indoor Cat Formula)",
+          imageUrl: "./03.jpg",
+          description:
+            "แมวเลี้ยงในบ้าน/คอนโดก็ฟินได้ ✨ ทูน่า + เนื้อจระเข้ โปรตีนคุณภาพสูง  เเพ้ง่าย ต้องลอง",
         };
         break;
       default:
@@ -252,7 +276,9 @@ export default function App() {
 
     return (
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-gray-700">{foodData.title}</h3>
+        <h3 className="text-xl font-semibold text-gray-700">
+          {foodData.title}
+        </h3>
         <img
           src={foodData.imageUrl}
           alt={foodData.title}
@@ -266,25 +292,24 @@ export default function App() {
   // ⭐️ ฟังก์ชันใหม่: สำหรับดึงชื่ออาหารที่แสดง
   const getFoodDisplayName = (key) => {
     switch (key) {
-      case 'kitten':
-        return 'อาหารแมวเด็ก';
-      case 'active':
-        return 'สูตร Active Cat';
-      case 'indoor':
-        return 'สูตร Indoor Cat';
+      case "kitten":
+        return "อาหารแมวเด็ก";
+      case "active":
+        return "สูตร Active Cat";
+      case "indoor":
+        return "สูตร Indoor Cat";
       default:
-        return 'อาหารแมว';
+        return "อาหารแมว";
     }
   };
 
-
   // -----------------
   return (
-    <div className="flex min-h-screen w-full flex-col items-center bg-purple-50 py-12 px-4">
+    <div className="flex min-h-screen w-full flex-col items-center bg-[#628966] py-12 px-4">
       <header className="text-center">
-        <h1 className="text-4xl font-bold text-gray-800">Pawdy AI</h1>
-        <p className="mt-2 text-lg text-gray-600">
-          เปลี่ยนน้องแมวของคุณให้เป็นการ์ตูนและแอนิเมชันสุดน่ารัก
+        <h1 className="text-4xl font-bold text-[#eee7d3]">Pawdy AI</h1>
+        <p className="mt-2 text-lg text-[#eee7d3]">
+          เเปลงร่างเจ้าเหมียวให้กลายเป็นตัวการ์ตูนสุดคิวท์
         </p>
       </header>
 
@@ -293,92 +318,109 @@ export default function App() {
       {/* ----------------------------------- */}
       <main className="mt-8 w-full max-w-lg">
         {step === 1 && (
-          <form
-            onSubmit={handleSubmitImage}
-            className="rounded-2xl bg-white p-6 shadow-lg sm:p-8"
-          >
-            <h2 className="mb-6 text-2xl font-semibold text-gray-700">
-              ขั้นตอนที่ 1: ข้อมูลน้องแมวของคุณ
-            </h2>
+          <>
+            <form
+              onSubmit={handleSubmitImage}
+              className="rounded-2xl bg-gray-50 p-6 shadow-lg sm:p-8"
+            >
+              <h2 className="mb-6 text-2xl font-semibold text-gray-700">
+                ขั้นตอนที่ 1: ข้อมูลของเจ้าเหมียว
+              </h2>
 
-            {/* ชื่อแมว */}
-            <div className="mb-6">
-              <label htmlFor="catName" className="mb-2 block text-sm font-medium text-gray-700">
-                ชื่อน้องแมว
-              </label>
-              <input
-                type="text"
-                id="catName"
-                value={catName}
-                onChange={(e) => setCatName(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 p-3 text-gray-900 focus:border-purple-500 focus:ring-purple-500"
-                placeholder="เช่น เจ้าสามสี"
-                required
-              />
-            </div>
-
-            {/* อัปโหลด */}
-            <div className="mb-6">
-              <label htmlFor="catImage" className="mb-2 block text-sm font-medium text-gray-700">
-                อัปโหลดรูปน้องแมว
-              </label>
-              <input
-                type="file"
-                id="catImage"
-                onChange={handleImageChange}
-                className="w-full text-sm text-gray-900 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-200 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-gray-700 hover:file:bg-gray-300"
-                accept="image/*"
-                required={!originalImageFile}
-              />
-            </div>
-
-            {/* พรีวิวรูปที่อัปโหลด */}
-            {originalImagePreview && (
-              <div className="mb-6 text-center">
-                <p className="text-sm text-gray-500">รูปต้นฉบับ:</p>
-                <img
-                  src={originalImagePreview}
-                  alt="Cat preview"
-                  className="mt-2 inline-block h-32 w-32 rounded-lg object-cover"
+              {/* ชื่อแมว */}
+              <div className="mb-6">
+                <label
+                  htmlFor="catName"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  ชื่อเจ้าเหมียวของคุณ
+                </label>
+                <input
+                  type="text"
+                  id="catName"
+                  value={catName}
+                  onChange={(e) => setCatName(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 p-3 text-gray-900 focus:border-purple-500 focus:ring-purple-500"
+                  placeholder="เช่น เจ้าสามสี"
+                  required
                 />
               </div>
-            )}
 
-            {/* ปุ่มสร้างภาพ */}
-            <button
-              type="submit"
-              disabled={isLoadingImage}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 py-3 px-4 text-base font-semibold text-white shadow-md transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isLoadingImage ? <Spinner /> : <Heart />}
-              {isLoadingImage ? 'กำลังสร้างภาพ...' : 'สร้างภาพแมว (ขั้นตอนที่ 1)'}
-            </button>
-          </form>
+              {/* อัปโหลด */}
+              <div className="mb-6">
+                <label
+                  htmlFor="catImage"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  อัปโหลดรูปสุดคิวท์ของเจ้าเหมียว
+                </label>
+                <input
+                  type="file"
+                  id="catImage"
+                  onChange={handleImageChange}
+                  className="w-full text-sm text-gray-900 file:mr-4 file:rounded-lg file:border-0 file:bg-[#fbb045] file:py-2 file:px-4 file:text-sm file:font-semibold file:text-white hover:file:bg-gray-300"
+                  accept="image/*"
+                  required={!originalImageFile}
+                />
+              </div>
+
+              {/* พรีวิวรูปที่อัปโหลด */}
+              {originalImagePreview && (
+                <div className="mb-6 text-center">
+                  <p className="text-sm text-gray-500">รูปต้นฉบับ:</p>
+                  <img
+                    src={originalImagePreview}
+                    alt="Cat preview"
+                    className="mt-2 inline-block h-32 w-32 rounded-lg object-cover"
+                  />
+                </div>
+              )}
+
+              {/* ปุ่มสร้างภาพ */}
+              <button
+                type="submit"
+                disabled={isLoadingImage}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#cbd183] py-3 px-4 text-base font-semibold text-gray-700 shadow-md transition hover:bg-[#838849] focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isLoadingImage ? <Spinner /> : ""}
+                {isLoadingImage
+                  ? "กำลังสร้างภาพ..."
+                  : "Animagus🪄 ได้เวลาแปลงร่างเจ้าเหมียว"}
+              </button>
+            </form>
+            <div className="mt-8 text-center">
+              <img
+                src="./catnip.png"
+                alt="Cute Cat"
+                className="mx-auto w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl h-auto"
+              />
+            </div>
+          </>
         )}
 
         {/* ----------------------------------- */}
         {/* 2. หน้าจอคำถาม 1 (อายุ) */}
         {/* ----------------------------------- */}
         {step === 2 && (
-          <div className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
+          <div className="rounded-2xl bg-[#eee7d3] p-6 shadow-lg sm:p-8">
             <h2 className="mb-6 text-center text-2xl font-semibold text-gray-700">
-              ขั้นตอนที่ 2: คำถามข้อที่ 1
+              ขั้นตอนที่ 2 คำถามเกี่ยวกับเจ้าเหมียว
             </h2>
             <p className="mb-6 text-center text-lg text-gray-600">
-              อายุของน้องแมว
+              อายุของเจ้าเหมียว
             </p>
             <div className="flex flex-col gap-4">
               <button
-                onClick={() => handleAgeSelect('<1')}
-                className="w-full rounded-lg bg-violet-100 py-3 px-4 text-base font-semibold text-violet-700 transition hover:bg-violet-200"
+                onClick={() => handleAgeSelect("<1")}
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#9ac93c] py-3 px-4 text-base font-semibold text-[#fff9e6] shadow-md transition hover:bg-[#9ac93c]"
               >
-                ต่ำกว่า 1 ปี (แมวเด็ก)
+                ต่ำกว่า 1 ปี (แมวเด็ก) <Cat />
               </button>
               <button
-                onClick={() => handleAgeSelect('>=1')}
-                className="w-full rounded-lg bg-violet-100 py-3 px-4 text-base font-semibold text-violet-700 transition hover:bg-violet-200"
+                onClick={() => handleAgeSelect(">=1")}
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#fbb045] py-3 px-4 text-base font-semibold text-[#fff9e6] shadow-md transition hover:bg-[#fbb045]"
               >
-                1 ปีขึ้นไป (แมวโต)
+                1 ปีขึ้นไป (แมวโต) <Cat />
               </button>
             </div>
           </div>
@@ -388,35 +430,35 @@ export default function App() {
         {/* 3. หน้าจอคำถาม 2 (กิจกรรม) */}
         {/* ----------------------------------- */}
         {step === 3 && (
-          <div className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
+          <div className="rounded-2xl bg-[#eee7d3] p-6 shadow-lg sm:p-8">
             <h2 className="mb-6 text-center text-2xl font-semibold text-gray-700">
-              ขั้นตอนที่ 3: คำถามข้อที่ 2
+              ขั้นตอนที่ 2 คำถามเกี่ยวกับเจ้าเหมียว
             </h2>
             <p className="mb-6 text-center text-lg text-gray-600">
-              พฤติกรรมการใช้พลังงานของน้องแมว
+              นิสัยของเจ้าเหมียว
             </p>
             <div className="flex flex-col gap-4">
               <button
-                onClick={() => handleActivitySelect('high')}
-                className="w-full rounded-lg bg-violet-100 py-3 px-4 text-base font-semibold text-violet-700 transition hover:bg-violet-200"
+                onClick={() => handleActivitySelect("high")}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-[#9ac93c] py-3 px-4 text-base font-semibold text-[#fff9e6] shadow-md transition hover:bg-[#9ac93c]"
               >
                 ชอบวิ่งเล่น อยู่ไม่ค่อยนิ่ง
               </button>
               <button
-                onClick={() => handleActivitySelect('high')}
-                className="w-full rounded-lg bg-violet-100 py-3 px-4 text-base font-semibold text-violet-700 transition hover:bg-violet-200"
+                onClick={() => handleActivitySelect("high")}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-[#fbb045] py-3 px-4 text-base font-semibold text-[#fff9e6] shadow-md transition hover:bg-[#fbb045]"
               >
                 พลังงานเยอะ
               </button>
               <button
-                onClick={() => handleActivitySelect('low')}
-                className="w-full rounded-lg bg-violet-100 py-3 px-4 text-base font-semibold text-violet-700 transition hover:bg-violet-200"
+                onClick={() => handleActivitySelect("low")}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-[#9ac93c] py-3 px-4 text-base font-semibold text-[#fff9e6] shadow-md transition hover:bg-[#9ac93c]"
               >
                 ชอบนอน ทำกิจกรรมไม่เยอะ
               </button>
               <button
-                onClick={() => handleActivitySelect('low')}
-                className="w-full rounded-lg bg-violet-100 py-3 px-4 text-base font-semibold text-violet-700 transition hover:bg-violet-200"
+                onClick={() => handleActivitySelect("low")}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-[#fbb045] py-3 px-4 text-base font-semibold text-[#fff9e6] shadow-md transition hover:bg-[#fbb045]"
               >
                 เล่นปกติ แต่ไม่ทั้งวัน
               </button>
@@ -430,22 +472,20 @@ export default function App() {
         {step === 4 && (
           <div className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
             <h2 className="mb-6 text-center text-2xl font-semibold text-gray-700">
-              ผลลัพธ์: สูตรอาหารที่แนะนำ
+              เจ้าเหมียวของคุณเหมากับสูตร: 
             </h2>
             {renderFoodRecommendation()}
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <button
                 onClick={() => setStep(5)}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-3 px-4 text-base font-semibold text-white shadow-md transition hover:bg-emerald-700"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#fbb045] py-3 px-4 text-base font-semibold text-gray-700 shadow-md transition hover:bg-[#fbb045]"
               >
-                <Video />
-                ทดลองชิม
+                มาดูเจ้าเหมียวทดลองชิมกันเลย
               </button>
               <button
                 onClick={handleReset}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-600 py-3 px-4 text-base font-semibold text-white shadow-md transition hover:bg-gray-700"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-gray-200 py-3 px-4 text-base font-semibold text-gray-700 shadow-md transition hover:bg-gray-200"
               >
-                <Save />
                 บันทึกผล
               </button>
             </div>
@@ -456,20 +496,18 @@ export default function App() {
         {/* 5. หน้าจอสร้าง/แสดงวิดีโอ */}
         {/* ----------------------------------- */}
         {step === 5 && (
-          <div className="rounded-2xl bg-white p-6 text-center shadow-lg sm:p-8">
+          <div className="rounded-2xl bg-[#eee7d3] p-6 text-center shadow-lg sm:p-8">
             <h2 className="mb-6 text-2xl font-semibold text-gray-700">
               {/* ⭐️ Change 1: เปลี่ยนหัวข้อ */}
               {generatedVideoUrl
                 ? `${catName} ชิมแล้ว!`
-                : `${catName} กำลังชิม ${getFoodDisplayName(recommendedFood)}`}
+                : `ชื่อแมว ${catName} `}
             </h2>
 
             {/* ⭐️ แสดงภาพการ์ตูนที่จะใช้ (เฉพาะตอนยังไม่มีวิดีโอ) */}
             {generatedImageData && !generatedVideoUrl && (
               <div className="mb-6">
-                <p className="text-gray-600">
-                  ภาพการ์ตูนของ {catName} ที่จะใช้:
-                </p>
+                <p className="text-gray-600"></p>
                 <img
                   src={generatedImageData.url}
                   alt={`Cartoon ${catName}`}
@@ -483,11 +521,13 @@ export default function App() {
               <button
                 onClick={handleSubmitVideo}
                 disabled={isLoadingVideo}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-3 px-4 text-base font-semibold text-white shadow-md transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#fbb045] py-3 px-4 text-base font-semibold text-white shadow-md transition hover:bg-[#fbb045] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isLoadingVideo ? <Spinner /> : <Video />}
+                {isLoadingVideo ? <Spinner /> : ""}
                 {/* ⭐️ Change 2: เปลี่ยนข้อความปุ่ม */}
-                {isLoadingVideo ? 'กำลังสร้างวิดีโอ...' : 'ปุ่มทดลองชิม'}
+                {isLoadingVideo
+                  ? "กำลังสร้างวิดีโอ..."
+                  : "มาเริ่มสร้างวิดิโอกันเลย"}
               </button>
             )}
 
@@ -506,28 +546,37 @@ export default function App() {
                 </video>
 
                 {/* ⭐️ Change: กล่องข้อความแมวตอบกลับ (Sequential) */}
-                <div className="mt-6 flex min-h-[120px] items-center justify-center rounded-lg border-2 border-pink-300 bg-pink-50 p-4 text-center shadow-md">
+                <div className="flex w-full items-center justify-center mt-4 gap-2 rounded-lg bg-[#9ac93c] py-3 px-4 text-base font-semibold text-gray-800 shadow-md transition hover:bg-[#9ac93c] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                   {/* Only one message appears at a time */}
                   {reactionStep === 1 && (
-                    <p className="animate-bounce text-lg font-semibold text-pink-700">"อร่อยมาก!"</p>
+                    <p className="animate-bounce text-lg font-semibold text-gray-800">
+                      "อร่อยมาก!"
+                    </p>
                   )}
                   {reactionStep === 2 && (
-                    <p className="animate-bounce text-lg font-semibold text-pink-700">"ยอดไปเลย!"</p>
+                    <p className="animate-bounce text-lg font-semibold text-gray-800">
+                      "ยอดไปเลย!"
+                    </p>
                   )}
                   {reactionStep === 3 && (
-                    <div className="animate-bounce flex items-center justify-center gap-1.5 text-xl font-bold text-yellow-500">
+                    <div className="animate-bounce flex items-center justify-center gap-1.5 text-xl font-bold text-gray-800">
                       <span>คะแนน 5/5</span>
-                      <Star className="h-5 w-5 fill-yellow-500" />
                     </div>
                   )}
                 </div>
-                
+
+                <button
+                  onClick={handleShareToFacebook}
+                  className="flex w-full mt-2 items-center justify-center gap-2 rounded-lg bg-[#ff5555] py-3 px-4 text-base font-semibold text-white shadow-md transition hover:bg-[#ff5555] focus:outline-none focus:ring-2 focus:ring-[#ff5555] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  แชร์ลงsocial
+                </button>
               </div>
             )}
 
             <button
               onClick={handleReset}
-              className="mt-6 w-full text-sm font-semibold text-gray-500 hover:text-gray-700 hover:underline"
+              className="flex w-full mt-2 items-center justify-center gap-2 rounded-lg bg-[#cbd183] py-3 px-4 text-base font-semibold text-gray-600 shadow-md transition hover:bg-[#cbd183] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               สร้างใหม่ทั้งหมด
             </button>
@@ -540,9 +589,9 @@ export default function App() {
       {/* ----------------------------------- */}
       {generatedImageData && step === 1 && (
         <section className="mt-10 w-full max-w-lg text-center">
-          <div className="rounded-2xl bg-white p-6 shadow-lg">
+          <div className="rounded-2xl bg-[#eee7d3] p-6 shadow-lg">
             <h3 className="text-xl font-semibold text-gray-700">
-              ภาพการ์ตูนของ {catName} เสร็จแล้ว!
+              !แปลงร่างสำเร็จแล้ว!
             </h3>
             <img
               src={generatedImageData.url}
@@ -552,11 +601,11 @@ export default function App() {
             {/* ⭐️ ปุ่มนี้จะไป step 2 (คำถาม) */}
             <button
               onClick={() => setStep(2)}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-3 px-4 text-base font-semibold text-white shadow-md transition hover:bg-emerald-700"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#fbb045] py-3 px-4 text-base font-semibold text-gray-700 shadow-md transition hover:bg-emerald-700"
             >
               {/* ⭐️ แก้ไขชื่อไอคอนที่นี่ */}
-              <MessageCircleQuestion />
-              ไปขั้นตอนที่ 2 ตอบคำถาม
+              สูตรอาหารที่เหมาะกับเจ้าเหมียว
+              <FaHandPointLeft className="text-white" />
             </button>
           </div>
         </section>
