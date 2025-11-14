@@ -57,7 +57,39 @@ export default function App() {
   const [reactionStep, setReactionStep] = useState(0);
 
   // -----------------
+const handleDownloadVideo = async () => {
+    if (!generatedVideoUrl) return;
 
+    try {
+      // 1. Fetch the video data
+      const response = await fetch(generatedVideoUrl);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      // 2. Get the data as a Blob
+      const blob = await response.blob();
+      
+      // 3. Create a local URL for the blob
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // 4. Create a temporary 'a' tag to trigger the download
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${catName || 'cat'}_video.mp4`; // Suggest a filename
+      
+      // 5. Click the link programmatically
+      document.body.appendChild(link);
+      link.click();
+      
+      // 6. Clean up by removing the link and revoking the blob URL
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+
+    } catch (error) {
+      console.error('Error downloading the video:', error);
+      alert('Could not download the video.');
+    }
+  };
   // เมื่อเลือกไฟล์
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -566,10 +598,10 @@ export default function App() {
                 </div>
 
                 <button
-                  onClick={handleShareToFacebook}
+                  onClick={handleDownloadVideo}
                   className="flex w-full mt-2 items-center justify-center gap-2 rounded-lg bg-[#ff5555] py-3 px-4 text-base font-semibold text-white shadow-md transition hover:bg-[#ff5555] focus:outline-none focus:ring-2 focus:ring-[#ff5555] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  แชร์ลงsocial
+                  ดาวน์โหลดวิดีโอ
                 </button>
               </div>
             )}
