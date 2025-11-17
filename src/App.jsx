@@ -395,6 +395,10 @@ const handleDownloadVideo = async () => {
                   required={!originalImageFile}
                 />
               </div>
+              {/* อัปโหลด */}
+              <div className="mb-6">
+                <p className="text-gray-700">*โปรดเลือกภาพแมวที่ชัดเจนและเห็นตัวน้องครบถ้วน เพื่อให้ระบบประมวลผลได้อย่างแม่นยำ*</p>
+              </div>
 
               {/* พรีวิวรูปที่อัปโหลด */}
               {originalImagePreview && (
